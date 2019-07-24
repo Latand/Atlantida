@@ -73,7 +73,7 @@ async def no_state_call(call: types.CallbackQuery, state: FSMContext):
 
 @dp.message_handler(IsPrivate(), commands=["register"])
 async def no_state_text(message: types.Message, state: FSMContext):
-    await message.answer("Да не здесь же, а в группе! 😉")
+    await message.answer("🏛 Да не здесь же, а в группе! 😉")
 
 
 @dp.message_handler(IsPrivate())

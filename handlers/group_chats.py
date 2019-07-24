@@ -22,20 +22,20 @@ async def register_chat(message: types.Message, regexp_command):
     if p and p.running:
         a = "вопросы" if p.current == p.QUESTIONS else "ответы"
         return await message.answer(
-            f"☀️Атлантида принимает {a}, дождитесь окончания до того, чтобы задать новый вопрос")
+            f"🏛 КАТЕГОРИЯ принимает {a}, дождитесь окончания сеанса связи")
     timeout = int(regexp_command.group(1))
-    if 0 < timeout < 240:
+    if 1 < timeout < 180:
         p = Phase(timeout=timeout * 60)
-        await message.answer("🏡Добро пожаловать домой")
+        await message.answer("🏛 Связь с КАТЕГОРИЯ установлена")
         asyncio.ensure_future(p.start_phaser())
     else:
-        await message.answer("Неверное значение. Минимум 1 минута, максимум 240.")
+        await message.answer("🏛 Просим у Вас прощения, но в данный момент длительность сеанса связи находится в диапазоне от 2х до 180 минут (3 Часа).")
 
 
 @dp.message_handler(IsGroup(), commands=["Atlantide"])
 async def register_chat(message: types.Message):
-    await message.answer("Для того, чтобы начать введите /Atlantide 20\n"
-                         "Где 20 - время в минутах для того, чтобы задавать вопросы Атлантиде.")
+    await message.answer("🏛 Для связи с КАТЕГОРИЯ введите /Atlantide 10\n"
+                         "Где 10 - время одного сеанса в минутах .")
 
 
 @dp.message_handler(IsGroup(), commands=["register"])
@@ -44,16 +44,17 @@ async def register_chat(message: types.Message):
     admins = await message.chat.get_administrators()
     for admin in admins:
         if chat_id == admin.user.id:
-            await message.reply("Написал в лс.")
+            await message.reply("🏡 Добро пожаловать Домой!\n"
+                                "🏛 Перейдите в ЛС для выбора Вашего расположения")
             exists = add_chat(message.chat.id)
             markup = create_pages()
 
             if exists:
-                text = "Чат уже был зарегистрирован. Введите категорию или выберите из списка, чтобы изменить"
+                text = "🏛 Ваше расположение уже было зарегистрировано. Создайте новое расположение Вашего чата или выберите из предложенного списка"
             else:
-                text = "Чат зарегистрирован. Введите категорию или выберите из списка:"
+                text = "🏛 Поздравляем! Ваш чат связан с ☀️Атлантидой. Создайте новое расположение Вашего чата или выберите из предложенного списка:"
             text += "\n\n" \
-                    "Или нажмите /cancel чтобы отменить."
+                    "Нажмите /cancel для отмены."
             await bot.send_message(chat_id, text,
                                    reply_markup=markup)
             await dp.current_state(chat=chat_id, user=chat_id).set_state(Registration.WaitForCategory)
@@ -72,24 +73,24 @@ async def asked_question(message: types.Message):
             poll = await bot.send_poll(
                 chat_id=message.chat.id,
                 reply_to_message_id=message.message_id,
-                question=f"Задавать вопрос ☀️Атлантиде?\n"
+                question=f"🏛 Отправить вопрос в КАТЕГОРИЯ ?\n" 
                 f"⏱ {p.time_left // 60} мин",
-                options=["Да! ✊Задавать!", "☁️"],
+                options=["✊Отправлять!", "☁️"],
                 disable_notification=True)
 
             add_question(chat_id, question, message.message_id, poll.message_id)
         else:
             a = "вопросы" if p.current == p.QUESTIONS else "ответы к этому вопросу"
-            text = f"☀️Атлантида принимает {a}, ожидайте {p.time_left // 60} мин\n"
+            text = f"КАТЕГОРИЯ принимает {a}, ожидайте следующего сеанса через {p.time_left // 60} мин\n"
             q_id = get_winner_question_id(chat_id)
             logging.info(f"QUID {q_id}")
             reply = None
             if q_id:
-                text += f"Отвечаем на этот вопрос"
+                text += f" КАТЕГОРИЯ отвечает на этот вопрос"
                 reply = q_id
             await bot.send_message(chat_id, text, reply_to_message_id=reply)
     else:
-        await message.answer("☀️Атлантида не запущена, нажмите /Atlantide, чтобы начать")
+        await message.answer("🏛 Для начала сеанса связи с КАТЕГОРИЯ введите команду /Atlantide")
 
 
 @dp.message_handler(AnsweredQuestion())
@@ -102,17 +103,17 @@ async def asked_question(message: types.Message):
             poll = await bot.send_poll(
                 chat_id=message.chat.id,
                 reply_to_message_id=message.message_id,
-                question=f"Отправлять ответ ☀️Атлантиде? \n{p.time_left // 60} мин",
-                options=["Да! ✊Отправлять!", "☁️"],
+                question=f"🏛 Отправить ответ в КАТЕГОРИЯ? \n{p.time_left // 60} мин",
+                options=["✊ Отправлять!", "☁️"],
                 disable_notification=True)
 
             add_answer(chat_id, answer, message.message_id, poll.message_id)
         else:
             a = "вопросы" if p.current == p.QUESTIONS else "ответы к этому вопросу"
-            text = f"☀️Атлантида принимает {a}, надо подождать еще {p.time_left // 60} мин\n"
+            text = f"🏛 Ваша КАТЕГОРИЯ принимает {a}, время до окончания сеанса {p.time_left // 60} мин\n"
             await message.answer(text)
     else:
-        await message.answer("☀️Атлантида не запущена, нажмите /Atlantide, чтобы начать")
+        await message.answer("🏛 Для начала сеанса связи с КАТЕГОРИЯ введите команду /Atlantide")
 
 
 @dp.message_handler(IsGroup())

@@ -28,7 +28,7 @@ async def category_text(message: types.Message, state: FSMContext):
     await state.finish()
     chat = data.get("chat_id")
     add_category(chat, category)
-    await message.answer(f"🏛 Вы расположились в {category}")
+    await message.answer(f"🏛 Вы расположились в {category}. Для изменения расположения введите команду register в Вашем канале/чате")
 
 
 @dp.callback_query_handler(IsPrivate(), page_change.filter(), state=Registration.WaitForCategory)
@@ -67,7 +67,7 @@ async def no_state_call(call: types.CallbackQuery, state: FSMContext):
     logging.info(f"{state}")
     await call.message.edit_reply_markup()
     
-    await call.message.answer("🏛 У Вас уже есть расположение в КАТЕГОРИЯ Вы всегда можете изменить его  - указав в нужном чате команду"
+    await call.message.answer("🏛 У Вас уже есть расположение в КАТЕГОРИЯ Вы всегда можете изменить его указав в нужном чате/канале команду"
                               "/register")
 
 

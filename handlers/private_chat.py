@@ -10,7 +10,7 @@ from utils.states import Registration
 
 @dp.message_handler(IsPrivate(), commands=["start"])
 async def start(message: types.Message):
-    text = "🏛 Чтобы наладить связь с ☀️Атлантидой - добавьте бота в чат/канал администратором и напишите в чате/канале команду " \
+    text = "🏛 Чтобы наладить связь с ☀️Атлантидой - добавьте бота администратором в чат/канал и напишите в нём команду " \
            "/register"
     await message.answer(text)
 
@@ -67,7 +67,12 @@ async def no_state_call(call: types.CallbackQuery, state: FSMContext):
     logging.info(f"{state}")
     await call.message.edit_reply_markup()
     
-    await call.message.answer("🏛 У Вас уже есть расположение в КАТЕГОРИЯ Вы всегда можете изменить его указав в нужном чате/канале команду"
+    category = call.data
+    data = await state.get_data()
+    await state.finish()
+    chat = data.get("chat_id")
+    add_category(chat, category)
+    await call.message.answer(f"🏛 У Вас уже есть расположение в {category} Вы всегда можете изменить его указав в нужном чате/канале команду"
                               "/register")
 
 

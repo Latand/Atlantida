@@ -89,7 +89,7 @@ async def asked_question(message: types.Message):
                 reply = q_id
             await bot.send_message(chat_id, text, reply_to_message_id=reply)
     else:
-        await message.answer("☀️Атлантида не запущена, нажмите /ask_all, чтобы начать")
+        await message.answer("☀️Атлантида не запущена, нажмите /Atlantide, чтобы начать")
 
 
 @dp.message_handler(AnsweredQuestion())
@@ -112,7 +112,7 @@ async def asked_question(message: types.Message):
             text = f"☀️Атлантида принимает {a}, надо подождать еще {p.time_left // 60} мин\n"
             await message.answer(text)
     else:
-        await message.answer("☀️Атлантида не запущена, нажмите /ask_all, чтобы начать")
+        await message.answer("☀️Атлантида не запущена, нажмите /Atlantide, чтобы начать")
 
 
 @dp.message_handler(IsGroup())

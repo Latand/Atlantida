@@ -10,7 +10,7 @@ from utils.states import Registration
 
 @dp.message_handler(IsPrivate(), commands=["start"])
 async def start(message: types.Message):
-    text = "Для того, чтобы добавить ваш чат базу - добавьте бота в чат/канал администратором и напишите там команду " \
+    text = "Чтобы наладить связь с ☀️Атлантидой - добавьте бота в чат/канал администратором и напишите в чате/канале команду " \
            "/register"
     await message.answer(text)
 
@@ -28,7 +28,7 @@ async def category_text(message: types.Message, state: FSMContext):
     await state.finish()
     chat = data.get("chat_id")
     add_category(chat, category)
-    await message.answer(f"Категория {category} определена!")
+    await message.answer(f"Вы расположились в {category}")
 
 
 @dp.callback_query_handler(IsPrivate(), page_change.filter(), state=Registration.WaitForCategory)
@@ -59,7 +59,7 @@ async def category_call(call: types.CallbackQuery, state: FSMContext):
     await state.finish()
     chat = data.get("chat_id")
     add_category(chat, category)
-    await call.message.answer(f"Категория {category} определена!")
+    await call.message.answer(f"Связь с {category} налажена!")
 
 
 @dp.callback_query_handler(IsPrivate())
@@ -67,7 +67,7 @@ async def no_state_call(call: types.CallbackQuery, state: FSMContext):
     logging.info(f"{state}")
     await call.message.edit_reply_markup()
 
-    await call.message.answer("Вы уже выбрали категорию выше, если хотите переназначить - нажмите в нужном чате "
+    await call.message.answer("У Вас уже есть расположение в ☀️Атлантиде. Вы всегда можете изменить его  - указав в нужном чате команду"
                               "/register")
 
 

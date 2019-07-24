@@ -15,9 +15,9 @@ from utils.database import (load_questions, add_winner_question,
 
 @dataclass
 class Phase:
+    timeout: int = 20 * 60
     current: str = "Questions"
     countdown: datetime = datetime.datetime.now()
-    timeout: int = 20 * 60
     running: bool = False
     QUESTIONS = "Questions"
     ANSWERS = "Answers"
@@ -53,8 +53,8 @@ class Phase:
             logging.info(f"ENTERING PHASE QUESTIONS")
             clear_table("sent_messages")
             global messages_to_delete
-            messages_to_delete = await send_to_all(bot, "☀В данный момент ☀️Атлантида  принимает вопросы.\n"
-                                                        " 🏛️ Чтобы задать вопрос укажите  #В")
+            return await send_to_all(bot, "☀В данный момент ☀️Атлантида  принимает вопросы.\n"
+                                          " 🏛️ Чтобы задать вопрос укажите  #В")
 
         async def answers():
             clear_table("winner_questions")
@@ -77,7 +77,6 @@ class Phase:
                 self.running = False
                 return
             for id_question, chat_id, question in l_questions_to_send:
-                question = f"Был задан вопрос: \n{question}"
                 try:
                     sent_message = await bot.send_message(chat_id, question)
                     save_sent(id_question, chat_id, sent_message.message_id)
@@ -124,7 +123,7 @@ class Phase:
                     await sleep(0.05)
 
         self.set_running()
-        await questions()
+        messages_to_delete = await questions()
         await sleep(self.timeout)
         self.change_phase()
         await delete_messages(messages_to_delete)
@@ -133,6 +132,7 @@ class Phase:
 
 
 async def delete_messages(messages: List[Message]):
+    logging.info(f"Starting to delete notification messages")
     for message in messages:
         try:
             await message.delete()
@@ -144,7 +144,7 @@ async def send_to_all(bot, m):
     messages = []
     for id, chat_id, *_ in get_chats():
         try:
-            messages.append(await bot.send_message(chat_id, m))
+            messages.append(await bot.send_message(chat_id, m, disable_notification=True))
         except Exception as err:
             logging.error(err)
         finally:

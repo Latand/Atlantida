@@ -72,7 +72,7 @@ async def no_state_call(call: types.CallbackQuery, state: FSMContext):
     await state.finish()
     chat = data.get("chat_id")
     add_category(chat, category)
-    await call.message.answer(f"🏛 У Вас уже есть расположение в 🏘 {category} Вы всегда можете изменить его указав в нужном чате/канале команду"
+    await call.message.answer(f"🏛 У Вас уже есть расположение в 🏘 {category} Вы всегда можете изменить его указав в нужном 🏡 чате/канале команду"
                               "/connect")
 
 

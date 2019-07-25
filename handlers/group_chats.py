@@ -20,22 +20,22 @@ async def register_chat(message: types.Message, regexp_command):
     chat_id = message.from_user.id
     global p
     if p and p.running:
-        a = "вопросы" if p.current == p.QUESTIONS else "ответы"
+        a = "#В(Вопрос) или #О(Ответ)" if p.current == p.QUESTIONS else "#О(Ответ) или #В(Вопрос)"
         return await message.answer(
-            f"🏛 КАТЕГОРИЯ принимает {a}, дождитесь окончания сеанса ⚡️связи")
+            f"🏛 КАТЕГОРИЯ принимает {a}, пожалуйста дождитесь окончания 🌩СеансаСвязи")
     timeout = int(regexp_command.group(1))
     if 1 < timeout < 12:
         p = Phase(timeout=timeout * 60)
         await message.answer("🏛 ⚡️Связь с КАТЕГОРИЯ установлена")
         asyncio.ensure_future(p.start_phaser())
     else:
-        await message.answer("🏛 Приносим свои извенения за неудобства. В данный момент длительность сеанса ⚡️связи ограничена от 2х до 12 минут.")
+        await message.answer("🏛 Приносим свои извинения за временные неудобства. В данный момент длительность 🌩СеансаСвязи ограничена от 2х до 12 минут.")
 
 
 @dp.message_handler(IsGroup(), commands=["Atlantide"])
 async def register_chat(message: types.Message):
-    await message.answer("🏛 Для ⚡️связи с КАТЕГОРИЯ введите /connect 10\n"
-                         "Где 10 - время одного сеанса связи в минутах.")
+    await message.answer("🏛 Для создания 🗿Атланта в КАТЕГОРИЯ введите /call 12\n"
+                         "Где 12 - время одного 🌩СеансаСвязи в минутах.")
 
 
 @dp.message_handler(IsGroup(), commands=["register"])
@@ -45,7 +45,7 @@ async def register_chat(message: types.Message):
     for admin in admins:
         if chat_id == admin.user.id:
             await message.reply("🏡 Добро пожаловать Домой!\n"
-                                "🏛 Перейдите пожалуйства в ЛС и выберите Ваше расположение\n")
+                                "🏛 Перейдите пожалуйства в ЛС и укажите Ваше расположение\n")
             exists = add_chat(message.chat.id)
             markup = create_pages()
 
@@ -73,24 +73,24 @@ async def asked_question(message: types.Message):
             poll = await bot.send_poll(
                 chat_id=message.chat.id,
                 reply_to_message_id=message.message_id,
-                question=f"🏛 Отправить вопрос в КАТЕГОРИЯ ?\n" 
+                question=f"🏛 Создать 🗿Атланта в КАТЕГОРИЯ?\n" 
                 f"⏱ {p.time_left // 60} мин",
-                options=["⚡ Отправить!", "☁️"],
+                options=["⚡ Создать!", "☁️"],
                 disable_notification=True)
 
             add_question(chat_id, question, message.message_id, poll.message_id)
         else:
-            a = "вопросы" if p.current == p.QUESTIONS else "ответы к этому вопросу"
-            text = f"КАТЕГОРИЯ принимает {a}, ожидайте следующего сеанса через {p.time_left // 60} мин\n"
+            a = "#В(Вопрос) или #О(Ответ)" if p.current == p.QUESTIONS else "ответы к этому сообщению"
+            text = f"🏛 Ваша КАТЕГОРИЯ принимает {a}, следующий 🌩СеансСвязи через {p.time_left // 60} мин\n"
             q_id = get_winner_question_id(chat_id)
             logging.info(f"QUID {q_id}")
             reply = None
             if q_id:
-                text += f" КАТЕГОРИЯ отвечает на нижеследующее 🌀сообщение"
+                text += f"🏛 Ваша КАТЕГОРИЯ ОТВЕЧАЕТ на нижеследующее 🌀сообщение"
                 reply = q_id
             await bot.send_message(chat_id, text, reply_to_message_id=reply)
     else:
-        await message.answer("🏛 Для начала 🌩сеанса ⚡️связи с КАТЕГОРИЯ введите команду /Call")
+        await message.answer("🏛 Для начала 🌩СеансаСвязи в КАТЕГОРИЯ введите команду /call")
 
 
 @dp.message_handler(AnsweredQuestion())
@@ -103,8 +103,8 @@ async def asked_question(message: types.Message):
             poll = await bot.send_poll(
                 chat_id=message.chat.id,
                 reply_to_message_id=message.message_id,
-                question=f"🏛 Отправить ответ в КАТЕГОРИЯ? \n{p.time_left // 60} мин",
-                options=["⚡️ Отправлять!", "☁️"],
+                question=f"🏛 Создать 🗿Атланта в КАТЕГОРИЯ? \n{p.time_left // 60} мин",
+                options=["⚡️ Создать!", "☁️"],
                 disable_notification=True)
 
             add_answer(chat_id, answer, message.message_id, poll.message_id)
@@ -113,7 +113,7 @@ async def asked_question(message: types.Message):
             text = f"🏛 Ваша КАТЕГОРИЯ принимает {a} \n время для подачи заявок - {p.time_left // 60} мин\n"
             await message.answer(text)
     else:
-        await message.answer("🏛 Для начала 🌩сеанса ⚡️связи с КАТЕГОРИЯ введите команду /Call и укажите время ⚡️связи в минутах")
+        await message.answer("🏛 Для начала 🌩СеансаСвязи в КАТЕГОРИЯ введите команду /Call и укажите время ⚡️связи в минутах")
 
 
 @dp.message_handler(IsGroup())

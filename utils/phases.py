@@ -53,9 +53,9 @@ class Phase:
             logging.info(f"ENTERING PHASE QUESTIONS")
             clear_table("sent_messages")
             global messages_to_delete
-            return await send_to_all(bot, "🏛 КАТЕГОРИЯ ожидает Ваш вопрос.\n"
-                                          "Пример:\n"
-                                          "#В Ваш вопрос? ")
+            return await send_to_all(bot, "🏛 🏘 КАТЕГОРИЯ находится в режиме ⚡Связи.\n"
+                                          "Пример создания 🗿 #А :\n"
+                                          "#В ...ВашВопрос? или #О ...ВашОтвет!")
 
         async def answers():
             clear_table("winner_questions")

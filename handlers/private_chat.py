@@ -10,8 +10,8 @@ from utils.states import Registration
 
 @dp.message_handler(IsPrivate(), commands=["start"])
 async def start(message: types.Message):
-    text = "🏛 Чтобы наладить связь с ☀️Атлантидой - добавьте бота администратором в чат/канал и напишите в нём команду " \
-           "/register"
+    text = "🏛 Чтобы наладить ⚡️связь с ☀️Атлантидой - добавьте бота администратором в чат/канал и напишите в нём команду " \
+           "/connect"
     await message.answer(text)
 
 
@@ -28,7 +28,7 @@ async def category_text(message: types.Message, state: FSMContext):
     await state.finish()
     chat = data.get("chat_id")
     add_category(chat, category)
-    await message.answer(f"🏛 Вы расположились в {category}. Для изменения расположения введите команду register в Вашем канале/чате")
+    await message.answer(f"🏛 Вы расположились в 🏘 {category}. Для изменения расположения 🏡 введите команду connect в Вашем 🏡канале/чате")
 
 
 @dp.callback_query_handler(IsPrivate(), page_change.filter(), state=Registration.WaitForCategory)
@@ -59,7 +59,7 @@ async def category_call(call: types.CallbackQuery, state: FSMContext):
     await state.finish()
     chat = data.get("chat_id")
     add_category(chat, category)
-    await call.message.answer(f"🏛 Связь с {category} налажена!")
+    await call.message.answer(f"🏛 Поздравляем! ⚡️Связь с 🏘 {category} установлена!")
 
 
 @dp.callback_query_handler(IsPrivate())
@@ -72,13 +72,13 @@ async def no_state_call(call: types.CallbackQuery, state: FSMContext):
     await state.finish()
     chat = data.get("chat_id")
     add_category(chat, category)
-    await call.message.answer(f"🏛 У Вас уже есть расположение в {category} Вы всегда можете изменить его указав в нужном чате/канале команду"
-                              "/register")
+    await call.message.answer(f"🏛 У Вас уже есть расположение в 🏘 {category} Вы всегда можете изменить его указав в нужном чате/канале команду"
+                              "/connect")
 
 
 @dp.message_handler(IsPrivate(), commands=["register"])
 async def no_state_text(message: types.Message, state: FSMContext):
-    await message.answer("🏛 Да не здесь же, а в группе! 😉")
+    await message.answer("🏛 Да не здесь же, а в группе! 🌞")
 
 
 @dp.message_handler(IsPrivate())

@@ -1,10 +1,19 @@
 USE db;
+DROP TABLE chats;
+DROP TABLE questions;
+DROP TABLE winner_questions;
+DROP TABLE sent_messages;
+DROP TABLE answers;
+DROP TABLE winner_answers;
+
 create table IF NOT EXISTS chats
 (
     id       int auto_increment                     not null,
     chat_id  BIGINT                                 not null,
     date     timestamp    default CURRENT_TIMESTAMP not null,
     category VARCHAR(100) DEFAULT NULL,
+    count_users int null,
+    language VARCHAR(4) DEFAULT NULL,
 
     primary key (id, chat_id)
 ) COLLATE utf8mb4_general_ci;
@@ -35,7 +44,7 @@ create table IF NOT EXISTS winner_questions
     primary key (id, chat_id, message_id)
 ) COLLATE utf8mb4_general_ci;
 
-create table sent_messages
+create table IF NOT EXISTS sent_messages
 (
     chat_id     bigint not null,
     id_question int    not null,

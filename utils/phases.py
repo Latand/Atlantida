@@ -15,7 +15,8 @@ from utils.database import (load_questions, add_winner_question,
 
 @dataclass
 class Phase:
-    timeout: int = 20 * 60
+    last_chat_run: int
+    timeout: int = 6 * 60
     current: str = "Questions"
     countdown: datetime = datetime.datetime.now()
     running: bool = False
@@ -37,6 +38,9 @@ class Phase:
         else:
             self.current = self.QUESTIONS
 
+    def was_the_last(self, chat_id):
+        return chat_id == self.last_chat_run
+
     @property
     def time_left(self):
         now = datetime.datetime.now()
@@ -53,7 +57,7 @@ class Phase:
             logging.info(f"ENTERING PHASE QUESTIONS")
             clear_table("sent_messages")
             global messages_to_delete
-            return await send_to_all(bot, "🏛 🏘 КАТЕГОРИЯ находится в режиме ⚡Связи.\n"
+            return await send_to_all(bot, "🏛☀️Атлантида находится в режиме ⚡Связи.\n"
                                           "Пример создания 🗿Атланта:\n"
                                           "1-й 🌩СеансСвязи #В ...ВашВопрос? или #О ...ВашОтвет!\n"
                                           "2-й 🌩СеансСвязи Ваши ответы на выбранную 🌀Мысль")
@@ -80,7 +84,8 @@ class Phase:
                 return
             for id_question, chat_id, question in l_questions_to_send:
                 try:
-                    sent_message = await bot.send_message(chat_id, question)
+                    text = f"☁️ {question}"
+                    sent_message = await bot.send_message(chat_id, text)
                     save_sent(id_question, chat_id, sent_message.message_id)
 
                 except Exception as err:

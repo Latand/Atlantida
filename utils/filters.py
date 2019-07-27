@@ -19,9 +19,9 @@ class AskedQuestion(BoundFilter):
 
     async def check(self, message: types.Message):
         logging.info(message.text)
-        if ChatType.is_channel(message.chat) or ChatType.is_group_or_super_group(message.chat):
-            if message.text.lower().startswith("#в"):
-                return True
+        text = message.text.lower()
+        if text.startswith("#в") or text.startswith("#о"):
+            return ChatType.is_channel(message.chat) or ChatType.is_group_or_super_group(message.chat)
 
 
 @dataclass

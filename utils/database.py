@@ -16,13 +16,19 @@ def add_chat(chat_id) -> bool:
         return True
 
 
-def get_categories():
-    return sql.select(what="DISTINCT category", where="chats", multiple=True)
+def get_categories(language=None):
+    return sql.select(what="DISTINCT category", where="chats",
+                      condition=dict(language=language) if language else None,
+                      multiple=True)
 
 
-def add_category(chat_id, category):
+def get_category(chat_id):
+    return sql.select(what="category", where="chats", condition=dict(chat_id=chat_id))
+
+
+def add_category(chat_id, category, language):
     if sql.select(where="chats", condition={"chat_id": chat_id}):
-        sql.update(table="chats", category=category, condition=dict(chat_id=chat_id))
+        sql.update(table="chats", category=category, language=language, condition=dict(chat_id=chat_id))
 
 
 def add_question(chat_id, question, message_id, poll_id):
@@ -122,7 +128,7 @@ def get_winner_answers():
             emo = ["☀️", "🌤️", "⛅️"]
             text = f"☁️ {question}\n\n"
             text += "\n".join([f"{emo[num]} {answer}" for num, (answer,) in enumerate(answers)])
-            text += "\n\n#О"
+            text += "\n\n#А"
             chats = get_chats(category)
             logging.info(f"Chats for winners {chats}")
             data.append([chats, text])
@@ -149,3 +155,13 @@ def save_sent(id_question, chat_id, message_id):
 
 def get_sent():
     return sql.select(where="sent_messages")
+
+
+def get_count_for_category(category):
+    count_users = sql.select(where="chats", what="SUM(count_users)", condition={"category": category})
+    count_chats = sql.select(where="chats", what="COUNT(*)", condition={"category": category})
+    return count_chats, count_users
+
+
+def set_new_lang(chat_id, language):
+    sql.update(table="chats", language=language, condition=dict(chat_id=chat_id))

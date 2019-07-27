@@ -16,9 +16,13 @@ class ACLMiddleware(I18nMiddleware):
 
     async def get_user_locale(self, action, args):
         chat = types.Chat.get_current()
-        lang = get_lang(chat.id)
-        logging.info(f"Language is {lang}")
-        return lang or None
+        if chat:
+            lang = get_lang(chat.id)
+            if not lang:
+                lang = types.User.get_current().locale
+
+            logging.info(f"Language is {lang}")
+            return lang or None
 
 
 def setup_middleware(dp):

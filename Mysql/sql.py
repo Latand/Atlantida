@@ -109,18 +109,32 @@ class Mysql(object):
         return self.execute(command, args, select=True, one_element=one_element, multiple=multiple,
                             cursor_dict=cursor_dict)
 
-    def delete(self, table, what=None, where=None):
-        if where:
-            if not what:
-                raise NotImplementedError
-            if isinstance(where, str):
-                where = [where]
-            where = "AND ".join(["`{}` = %s ".format(wher) for wher in where])
+    def delete(self, table, what=None, where=None, condition: dict = None):
+        if not condition:
+            if where:
+                if not what:
+                    raise NotImplementedError
+                if isinstance(where, str):
+                    where = [where]
+                where = "AND ".join(["`{}` = %s ".format(wher) for wher in where])
+            else:
+                where = 1
+                what = []
+            return self.execute(command="DELETE FROM {} WHERE {}".format(table, where),
+                                args=what)
         else:
-            where = 1
-            what = []
-        return self.execute(command="DELETE FROM `{}` WHERE {}".format(table, where),
-                            args=what)
+            args = []
+            command = f"DELETE FROM {table} WHERE "
+            for item, value in condition.items():
+
+                if not any([x.lower() in str(value).lower() for x in ["<", ">", "!", "IS", "=", "("]]):
+                    command += " {} = %s AND".format(item)
+                    args.append(value)
+                else:
+                    command += " {} {} AND".format(item, value)
+            command = command[:-3] if command.endswith("AND") else command
+            logging.info(command + str(args))
+            return self.execute(command=command, args=args)
 
     def update(self, table, **kwargs):
         args = []

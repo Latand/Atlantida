@@ -1,9 +1,15 @@
 from Mysql.sql import sql
 import logging
+from aiogram.types import Message
+from typing import List
 
 
-def clear_table(table):
-    sql.delete(table=table)
+def clear_table(table, category: str):
+    command = f"""DELETE t FROM {table} t 
+LEFT JOIN chats c ON c.chat_id = t.chat_id
+WHERE c.category = %s
+"""
+    sql.execute(command, (category,))
 
 
 def add_chat(chat_id) -> bool:
@@ -39,39 +45,18 @@ def add_answer(chat_id, answer, message_id, poll_id):
     sql.insert(table="answers", chat_id=chat_id, answer=answer, message_id=message_id, poll_id=poll_id)
 
 
-def load_questions():
-    categories = sql.select(where="questions q, chats c",
-                            what="DISTINCT c.category",
-                            condition={"q.chat_id": "=c.chat_id"},
-                            multiple=True)
-    data = []
-    if categories:
-        for (category,) in categories:
-            chats = sql.select(where="questions q, chats c",
-                               what="q.chat_id, q.poll_id, q.question, q.message_id",
-                               condition={"q.chat_id": "=c.chat_id",
-                                          "c.category": category})
-            data.append([category, chats])
-    logging.info(str(data))
-    return data
+def load_questions(category):
+    return sql.select(where="questions q, chats c",
+                      what="q.chat_id, q.poll_id, q.question, q.message_id",
+                      condition={"q.chat_id": "=c.chat_id",
+                                 "c.category": category})
 
 
-def load_answers():
-    categories = sql.select(where="answers q, chats c",
-                            what="DISTINCT c.category",
-                            condition={"q.chat_id": "=c.chat_id"},
-                            multiple=True)
-    data = []
-    if categories:
-        for (category,) in categories:
-            chats = sql.select(where="answers q, chats c",
-                               what="q.chat_id, q.poll_id, q.answer, q.message_id",
-                               condition={"q.chat_id": "=c.chat_id",
-                                          "c.category": category})
-            data.append([category, chats])
-    logging.info("ANSWERS:")
-    logging.info(str(data))
-    return data
+def load_answers(category):
+    return sql.select(where="answers q, chats c",
+                      what="q.chat_id, q.poll_id, q.answer, q.message_id",
+                      condition={"q.chat_id": "=c.chat_id",
+                                 "c.category": category})
 
 
 def add_winner_question(chat_id, category, question, message_id, poll_id):
@@ -95,7 +80,6 @@ def add_winner_answer(chat_id, category, answer, message_id, poll_id, vote_count
 def get_chats(category=None):
     if category:
         return sql.select(where="chats",
-                          what="chat_id",
                           condition=dict(category=category),
                           multiple=True)
     else:
@@ -114,47 +98,44 @@ def get_winner_question_id(chat_id):
                                  "w.id": "=s.id_question"})
 
 
-def get_winner_answers():
-    categories = get_categories()
-    data = []
-    for (category,) in categories:
-        answers = sql.select(where="winner_answers",
-                             what="answer",
-                             order="vote_count DESC",
-                             limit=3,
-                             multiple=True)
-        question = get_winner_question(category)
-        if question and answers:
-            emo = ["☀️", "🌤️", "⛅️"]
-            text = f"☁️ {question}\n\n"
-            text += "\n".join([f"{emo[num]} {answer}" for num, (answer,) in enumerate(answers)])
-            text += "\n\n#А"
-            chats = get_chats(category)
-            logging.info(f"Chats for winners {chats}")
-            data.append([chats, text])
-    return data
+def get_winner_answers(category):
+    answers = sql.select(where="winner_answers",
+                         what="answer",
+                         order="vote_count DESC",
+                         limit=3,
+                         multiple=True,
+                         condition={"category": category})
+    question = get_winner_question(category)
+    if question and answers:
+        emo = ["☀️", "🌤️", "⛅️"]
+        text = f"☁️ {question}\n\n"
+        text += "\n".join([f"{emo[num]} {answer}" for num, (answer,) in enumerate(answers)])
+        text += "\n\n#А"
+        return text
 
 
-def delete_questions():
-    clear_table("questions")
+def delete_questions(category):
+    clear_table("questions", category)
 
 
-def delete_answers():
-    clear_table("answers")
+def delete_answers(category):
+    clear_table("answers", category)
 
 
-def questions_to_send():
+def questions_to_send(category):
     return sql.select(where="winner_questions w, chats c",
                       what="w.id, c.chat_id, w.question",
-                      condition={"w.category": "=c.category"})
+                      condition={"w.category": category})
 
 
 def save_sent(id_question, chat_id, message_id):
     sql.insert(table="sent_messages", id_question=id_question, chat_id=chat_id, message_id=message_id)
 
 
-def get_sent():
-    return sql.select(where="sent_messages")
+def get_sent(category):
+    return sql.select(where="sent_messages s, chats c",
+                      condition={"s.chat_id": "c.chat_id",
+                                 "c.category": category})
 
 
 def get_count_for_category(category):
@@ -165,3 +146,8 @@ def get_count_for_category(category):
 
 def set_new_lang(chat_id, language):
     sql.update(table="chats", language=language, condition=dict(chat_id=chat_id))
+
+
+def save_no_phase(messages: List[Message]):
+    for message in messages:
+        sql.insert(table="no_phase_message", chat_id=message.chat.id, message_id=message.message_id)

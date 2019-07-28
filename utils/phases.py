@@ -5,6 +5,7 @@ import datetime
 from aiogram import Bot
 from typing import List
 import asyncio
+from functools import lru_cache
 from aiogram.types import Message
 from utils.database import (load_questions, add_winner_question,
                             delete_questions, questions_to_send,
@@ -15,7 +16,8 @@ from utils.database import (load_questions, add_winner_question,
 
 @dataclass
 class Phase:
-    last_chat_run: int
+    category: str
+    last_chat_run: int = None
     timeout: int = 6 * 60
     current: str = "Questions"
     countdown: datetime = datetime.datetime.now()
@@ -42,47 +44,51 @@ class Phase:
         return chat_id == self.last_chat_run
 
     @property
+    def chats(self):
+        return get_chats(self.category)
+
+    @property
     def time_left(self):
         now = datetime.datetime.now()
         return ((self.countdown + datetime.timedelta(seconds=self.timeout)) - now).total_seconds()
 
     async def start_phaser(self):
         bot = Bot.get_current()
-        # await sleep(5)  # Wait until dp loads
         logging.info("Phaser started")
         messages_to_delete = list()
 
         async def questions():
-            clear_table("winner_answers")
+            clear_table("winner_answers", self.category)
             logging.info(f"ENTERING PHASE QUESTIONS")
-            clear_table("sent_messages")
+            clear_table("sent_messages", self.category)
             global messages_to_delete
             return await send_to_all(bot, "🏛☀️Атлантида находится в режиме ⚡Связи.\n"
                                           "Пример создания 🗿Атланта:\n"
                                           "1-й 🌩СеансСвязи #В ...ВашВопрос? или #О ...ВашОтвет!\n"
-                                          "2-й 🌩СеансСвязи Ваши ответы на выбранную 🌀Мысль")
+                                          "2-й 🌩СеансСвязи Ваши ответы на выбранную 🌀Мысль",
+                                     category=self.category)
 
         async def answers():
-            clear_table("winner_questions")
-            for category, chats in load_questions():
-                best_option = 0, 0, 0
-                for chat_id, poll_id, question, message_id in chats:
-                    try:
-                        poll = await bot.stop_poll(chat_id=chat_id, message_id=poll_id)
-                        logging.info(f"{poll.options}")
-                        voters_count = poll.options[0].voter_count
-                        if voters_count > best_option[0]:
-                            best_option = voters_count, chat_id, message_id
-                            add_winner_question(chat_id, category, question, message_id, poll_id)
-                    except Exception as err:
-                        logging.exception(err)
-                logging.info(f"category {category} winner: {best_option}")
-            delete_questions()
-            l_questions_to_send = questions_to_send()
-            if not l_questions_to_send:
+            clear_table("winner_questions", self.category)
+            chats = load_questions(self.category)
+            best_option = 0, 0, 0
+            for chat_id, poll_id, question, message_id in chats:
+                try:
+                    poll = await bot.stop_poll(chat_id=chat_id, message_id=poll_id)
+                    voters_count = poll.options[0].voter_count
+                    if voters_count > best_option[0]:
+                        best_option = voters_count, chat_id, message_id
+                        add_winner_question(chat_id, self.category, question, message_id, poll_id)
+                except Exception as err:
+                    logging.exception(err)
+
+            logging.info(f"category {self.category} winner: {best_option}")
+            delete_questions(self.category)
+            load_questions_to_send = questions_to_send(self.category)
+            if not load_questions_to_send:
                 self.running = False
                 return
-            for id_question, chat_id, question in l_questions_to_send:
+            for id_question, chat_id, question in load_questions_to_send:
                 try:
                     text = f"☁️ {question}"
                     sent_message = await bot.send_message(chat_id, text)
@@ -96,30 +102,29 @@ class Phase:
             await sleep(self.timeout)
 
             # Load answers
-            for category, chats in load_answers():
-                for chat_id, poll_id, answer, message_id in chats:
-                    try:
-                        poll = await bot.stop_poll(chat_id=chat_id, message_id=poll_id)
-                        logging.info(f"{poll.options}")
+            loaded_answers = load_answers(self.category)
+            for chat_id, poll_id, answer, message_id in loaded_answers:
+                try:
+                    poll = await bot.stop_poll(chat_id=chat_id, message_id=poll_id)
+                    logging.info(f"{poll.options}")
 
-                        voters_count = poll.options[0].voter_count
-                        add_winner_answer(chat_id, category, answer, message_id, poll_id, voters_count)
+                    voters_count = poll.options[0].voter_count
+                    add_winner_answer(chat_id, self.category, answer, message_id, poll_id, voters_count)
+                except Exception as err:
+                    logging.exception(err)
+            delete_answers(self.category)
+
+            text = get_winner_answers(self.category)
+            if text:
+                for (chat,) in self.chats:
+                    try:
+                        await bot.send_message(chat, text)
+
                     except Exception as err:
                         logging.exception(err)
-            delete_answers()
-
-            winner_answers = get_winner_answers()
-            if winner_answers:
-                for chats, text in winner_answers:
-                    for (chat,) in chats:
-                        try:
-                            await bot.send_message(chat, text)
-
-                        except Exception as err:
-                            logging.exception(err)
 
             # Delete messages
-            sent_messages = get_sent()
+            sent_messages = get_sent(self.category)
             if sent_messages:
                 for chat_id, _, message_id in sent_messages:
                     try:
@@ -138,6 +143,11 @@ class Phase:
         self.disable()
 
 
+@lru_cache()
+def get_phase(category):
+    return Phase(category=category)
+
+
 async def delete_messages(messages: List[Message]):
     logging.info(f"Starting to delete notification messages")
     for message in messages:
@@ -147,9 +157,9 @@ async def delete_messages(messages: List[Message]):
             logging.error(err)
 
 
-async def send_to_all(bot, m):
+async def send_to_all(bot, m, category: str = None):
     messages = []
-    for id, chat_id, *_ in get_chats():
+    for id, chat_id, *_ in get_chats(category=category):
         try:
             messages.append(await bot.send_message(chat_id, m, disable_notification=True))
         except Exception as err:

@@ -5,36 +5,38 @@ from aiogram.dispatcher import filters
 
 from app import dp, bot, logging, _
 from utils.database import (add_question, add_answer,
-                            get_winner_question_id, get_category)
-from utils.filters import IsGroup, AskedQuestion, AnsweredQuestion
-from utils.phases import Phase
+                            get_winner_question_id, get_category,
+                            save_no_phase)
+from utils.filters import IsGroup, AskedQuestion, AnsweredQuestionPhase, AnsweredQuestionNoPhase
+from utils.phases import send_to_all, get_phase
 
 from aiogram.utils.callback_data import CallbackData
 
 language_callback = CallbackData("language", "code")
-
-p: Phase = None
 
 
 # Start phase with specified time
 @dp.message_handler(IsGroup(), filters.RegexpCommandsFilter(regexp_commands=['call ([0-9]*)']))
 async def register_chat(message: types.Message, regexp_command):
     chat_id = message.chat.id
-    global p
     category = get_category(chat_id)
+    if not category:
+        return await message.answer(_("Чат не подключен, нажмите /connect"))
+    timeout = int(regexp_command.group(1))
+    phase = get_phase(category)
 
-    if p and p.running:
-        a = _("#В(Вопрос) или #О(Ответ)") if p.current == p.QUESTIONS else _("#О(Ответ) или #В(Вопрос)")
+    if phase.running:
+        a = _("#В(Вопрос) или #О(Ответ)") if phase.current == phase.QUESTIONS else _("#О(Ответ) или #В(Вопрос)")
         return await message.answer(
             _("🏛Ваш 🏠дом {category} принимает {a}, пожалуйста дождитесь окончания 🌩СеансаСвязи").format(
                 category=category,
                 a=a))
-    timeout = int(regexp_command.group(1))
-    if 1 < timeout < 12:
-        if not p or not p.was_the_last(chat_id):
-            p = Phase(timeout=timeout * 60, last_chat_run=chat_id)
+    elif 1 < timeout < 12:
+        if not phase.was_the_last(chat_id):
+            phase.timeout = timeout * 60
+            phase.last_chat_run = chat_id
             await message.answer(_("🏛 ⚡️Связь с {category} установлена").format(category=category))
-            asyncio.ensure_future(p.start_phaser())
+            asyncio.ensure_future(phase.start_phaser())
         else:
             await message.answer(_("🏛 Приносим извинения за временные неудобства. \n"
                                    "Ваш 🏡чат/канал недавно запускал 🌩СеансСвязи ожидайте Ваш 🌀Порядок через ⚡️1 "))
@@ -49,12 +51,14 @@ async def register_chat(message: types.Message, regexp_command):
 async def register_chat(message: types.Message):
     chat_id = message.chat.id
     category = get_category(chat_id)
-    global p
+    if not category:
+        return await message.answer(_("Чат не подключен, нажмите /connect"))
 
-    if not p or not p.was_the_last(chat_id):
-        p = Phase(last_chat_run=chat_id)
+    phase = get_phase(category)
+    if not phase.was_the_last(chat_id) and not phase.running:
+        phase.last_chat_run = chat_id
         await message.answer(_("🏛 ⚡️Связь с {category} установлена").format(category=category))
-        asyncio.ensure_future(p.start_phaser())
+        asyncio.ensure_future(phase.start_phaser())
     else:
         await message.answer(_("🏛 Приносим извинения за временные неудобства. \n"
                                "Ваш 🏡чат/канал недавно запускал 🌩СеансСвязи ожидайте Ваш 🌀Порядок через ⚡️1 "))
@@ -64,23 +68,25 @@ async def register_chat(message: types.Message):
 async def asked_question(message: types.Message):
     chat_id = message.chat.id
     category = get_category(chat_id)
-    if p and p.running:
-        if p.current == "Questions":
+
+    phase = get_phase(category)
+    if phase.running:
+        if phase.current == "Questions":
             question = message.text[3:]
             poll = await bot.send_poll(
                 chat_id=message.chat.id,
                 reply_to_message_id=message.message_id,
                 question=_("🏛 Создать 🗿Атланта в {category}?\n"
-                           "⏱ {time} мин").format(time=p.time_left // 60,
+                           "⏱ {time} мин").format(time=phase.time_left // 60,
                                                   category=category),
                 options=["⚡ Создать!", "☁️"],
                 disable_notification=True)
 
             add_question(chat_id, question, message.message_id, poll.message_id)
         else:
-            a = _("#В(Вопросы) или #О(Ответы)") if p.current == p.QUESTIONS else _("ответы к этой 🌀Мысли")
+            a = _("#В(Вопросы) или #О(Ответы)") if phase.current == phase.QUESTIONS else _("ответы к этой 🌀Мысли")
             text = _("🏛Ваш 🏠дом {category} принимает {a}, следующий 🌩СеансСвязи через {time} мин\n").format(
-                time=p.time_left // 60,
+                time=phase.time_left // 60,
                 category=category,
                 a=a
             )
@@ -91,16 +97,22 @@ async def asked_question(message: types.Message):
                 reply = q_id
             await bot.send_message(chat_id, text, reply_to_message_id=reply)
     else:
-        await message.answer(
-            _("🏛 Для начала 🌩СеансаСвязи в {category} введите команду /call").format(category=category))
+        question = message.text
+        messages_sent = await send_to_all(bot, question, category=category)
+        save_no_phase(messages_sent)
+
+        # await message.answer(
+        #     _("🏛 Для начала 🌩СеансаСвязи в {category} введите команду /call").format(category=category))
 
 
-@dp.message_handler(AnsweredQuestion())
+@dp.message_handler(AnsweredQuestionPhase())
 async def asked_question(message: types.Message):
     chat_id = message.chat.id
     category = get_category(chat_id)
-    if p and p.running:
-        if p.current == "Answers":
+
+    phase = get_phase(category)
+    if phase.running:
+        if phase.current == "Answers":
             answer = message.text
 
             poll = await bot.send_poll(
@@ -108,16 +120,16 @@ async def asked_question(message: types.Message):
                 reply_to_message_id=message.message_id,
                 question=_("🏛 Создать 🗿Атланта в {category}? \n{time} мин").format(
                     category=category,
-                    time=p.time_left // 60),
+                    time=phase.time_left // 60),
                 options=[_("⚡️ Создать!"), "☁️"],
                 disable_notification=True)
 
             add_answer(chat_id, answer, message.message_id, poll.message_id)
         else:
-            a = _("#В(Вопросы) или #О(Ответы)") if p.current == p.QUESTIONS else _("ответы к этой 🌀Мысли")
+            a = _("#В(Вопросы) или #О(Ответы)") if phase.current == phase.QUESTIONS else _("ответы к этой 🌀Мысли")
 
             text = _("🏛Ваш 🏠дом {category} принимает {a} \n время для подачи заявок - {time} мин\n").format(
-                time=p.time_left // 60,
+                time=phase.time_left // 60,
                 category=category,
                 a=a
             )
@@ -125,3 +137,16 @@ async def asked_question(message: types.Message):
     else:
         await message.answer(
             _("🏛 Для начала 🌩СеансаСвязи в {category} введите команду /call").format(category=category))
+
+
+@dp.message_handler(AnsweredQuestionNoPhase())
+async def asked_question(message: types.Message):
+    chat_id = message.chat.id
+    category = get_category(chat_id)
+    phase = get_phase(category)
+
+    if phase.running:
+        return
+    question = message.reply_to_message.text[2:]
+    text = "".join([question, "\n\n", message.text, "\n#A"])
+    await send_to_all(bot, text, category=category)

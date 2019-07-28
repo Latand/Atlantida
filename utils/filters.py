@@ -21,11 +21,12 @@ class AskedQuestion(BoundFilter):
         logging.info(message.text)
         text = message.text.lower()
         if text.startswith("#в") or text.startswith("#о"):
-            return ChatType.is_channel(message.chat) or ChatType.is_group_or_super_group(message.chat)
+            if ChatType.is_channel(message.chat) or ChatType.is_group_or_super_group(message.chat):
+                return bool(sql.select(where="chats", condition=dict(chat_id=message.chat.id)))
 
 
 @dataclass
-class AnsweredQuestion(BoundFilter):
+class AnsweredQuestionPhase(BoundFilter):
 
     async def check(self, message: types.Message):
         if ChatType.is_channel(message.chat) or ChatType.is_group_or_super_group(message.chat):
@@ -33,9 +34,19 @@ class AnsweredQuestion(BoundFilter):
             if rp:
                 rp = rp.message_id
                 chat_id = message.chat.id
+                return bool(sql.select(where="sent_messages", condition=dict(chat_id=chat_id, message_id=rp)))
 
-                return sql.select(where="sent_messages", condition=dict(chat_id=chat_id,
-                                                                        message_id=rp))
+
+@dataclass
+class AnsweredQuestionNoPhase(BoundFilter):
+
+    async def check(self, message: types.Message):
+        if ChatType.is_channel(message.chat) or ChatType.is_group_or_super_group(message.chat):
+            rp = message.reply_to_message
+            if rp:
+                rp = rp.message_id
+                chat_id = message.chat.id
+                return bool(sql.select(where="no_phase_message", condition=dict(chat_id=chat_id, message_id=rp)))
 
 
 @dataclass

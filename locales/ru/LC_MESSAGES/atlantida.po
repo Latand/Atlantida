@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-07-27 11:42+0100\n"
+"POT-Creation-Date: 2019-07-28 16:19+0100\n"
 "PO-Revision-Date: 2019-07-27 00:58+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ru\n"
@@ -19,79 +19,83 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.7.0\n"
 
-#: handlers/group/phases_handler.py:27
-msgid "#В(Вопрос) или #О(Ответ)"
-msgstr ""
-
-#: handlers/group/phases_handler.py:27
-msgid "#О(Ответ) или #В(Вопрос)"
+#: handlers/group/phases_handler.py:24 handlers/group/phases_handler.py:55
+msgid "Чат не подключен, нажмите /connect"
 msgstr ""
 
 #: handlers/group/phases_handler.py:29
+msgid "#В(Вопрос) или #О(Ответ)"
+msgstr ""
+
+#: handlers/group/phases_handler.py:29
+msgid "#О(Ответ) или #В(Вопрос)"
+msgstr ""
+
+#: handlers/group/phases_handler.py:31
 msgid ""
 "🏛Ваш 🏠дом {category} принимает {a}, пожалуйста дождитесь окончания "
 "🌩СеансаСвязи"
 msgstr ""
 
-#: handlers/group/phases_handler.py:36 handlers/group/phases_handler.py:56
+#: handlers/group/phases_handler.py:38 handlers/group/phases_handler.py:60
 msgid "🏛 ⚡️Связь с {category} установлена"
 msgstr ""
 
-#: handlers/group/phases_handler.py:39 handlers/group/phases_handler.py:59
+#: handlers/group/phases_handler.py:41 handlers/group/phases_handler.py:63
 msgid ""
 "🏛 Приносим извинения за временные неудобства. \n"
 "Ваш 🏡чат/канал недавно запускал 🌩СеансСвязи ожидайте Ваш 🌀Порядок через "
 "⚡️1 "
 msgstr ""
 
-#: handlers/group/phases_handler.py:43
+#: handlers/group/phases_handler.py:45
 msgid ""
 "🏛 Приносим извинения за временные неудобства. В данный момент "
 "длительность 🌩СеансаСвязи ограничена от 2х до 12 минут."
 msgstr ""
 
-#: handlers/group/phases_handler.py:73
+#: handlers/group/phases_handler.py:79
 msgid ""
 "🏛 Создать 🗿Атланта в {category}?\n"
 "⏱ {time} мин"
 msgstr ""
 
-#: handlers/group/phases_handler.py:81 handlers/group/phases_handler.py:117
+#: handlers/group/phases_handler.py:87 handlers/group/phases_handler.py:129
 msgid "#В(Вопросы) или #О(Ответы)"
 msgstr ""
 
-#: handlers/group/phases_handler.py:81 handlers/group/phases_handler.py:117
+#: handlers/group/phases_handler.py:87 handlers/group/phases_handler.py:129
 msgid "ответы к этой 🌀Мысли"
 msgstr ""
 
-#: handlers/group/phases_handler.py:82
+#: handlers/group/phases_handler.py:88
 msgid ""
 "🏛Ваш 🏠дом {category} принимает {a}, следующий 🌩СеансСвязи через {time} "
 "мин\n"
 msgstr ""
 
-#: handlers/group/phases_handler.py:90
+#: handlers/group/phases_handler.py:96
 msgid "🏛Ваш 🏠дом {category} ОТВЕЧАЕТ на следующую 🌀Мысль"
 msgstr ""
 
-#: handlers/group/phases_handler.py:95 handlers/group/phases_handler.py:127
-msgid "🏛 Для начала 🌩СеансаСвязи в {category} введите команду /call"
-msgstr ""
-
-#: handlers/group/phases_handler.py:109
+#: handlers/group/phases_handler.py:121
 msgid ""
 "🏛 Создать 🗿Атланта в {category}? \n"
 "{time} мин"
 msgstr ""
 
-#: handlers/group/phases_handler.py:112
+#: handlers/group/phases_handler.py:124
 msgid "⚡️ Создать!"
 msgstr ""
 
-#: handlers/group/phases_handler.py:119
+#: handlers/group/phases_handler.py:131
 msgid ""
 "🏛Ваш 🏠дом {category} принимает {a} \n"
 " время для подачи заявок - {time} мин\n"
+msgstr ""
+
+#: handlers/group/phases_handler.py:139
+msgid "🏛 Для начала 🌩СеансаСвязи в {category} введите команду /call"
 msgstr ""
 
 #: handlers/group/registration.py:21

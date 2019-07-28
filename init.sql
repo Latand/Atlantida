@@ -5,6 +5,7 @@ DROP TABLE winner_questions;
 DROP TABLE sent_messages;
 DROP TABLE answers;
 DROP TABLE winner_answers;
+DROP TABLE no_phase_message;
 
 create table IF NOT EXISTS chats
 (
@@ -78,4 +79,11 @@ create table IF NOT EXISTS winner_answers
 
     primary key (id, chat_id, message_id)
 ) COLLATE utf8mb4_general_ci;
+
+create table no_phase_message
+(
+	chat_id BIGINT not null,
+	message_id int not null,
+	date TIMESTAMP default CURRENT_TIMESTAMP not null
+);
 

@@ -64,6 +64,19 @@ async def register_chat(message: types.Message):
                                "Ваш 🏡чат/канал недавно запускал 🌩СеансСвязи ожидайте Ваш 🌀Порядок через ⚡️1 "))
 
 
+@dp.message_handler(AnsweredQuestionNoPhase())
+async def asked_question(message: types.Message):
+    chat_id = message.chat.id
+    category = get_category(chat_id)
+    phase = get_phase(category)
+
+    if phase.running:
+        return
+    question = message.reply_to_message.text[2:]
+    text = "".join([question, "\n\n", message.text, "\n#A"])
+    await send_to_all(bot, text, category=category)
+        
+     
 @dp.message_handler(AskedQuestion())
 async def asked_question(message: types.Message):
     chat_id = message.chat.id
@@ -103,7 +116,7 @@ async def asked_question(message: types.Message):
 
         # await message.answer(
         #     _("🏛 Для начала 🌩СеансаСвязи в {category} введите команду /call").format(category=category))
-
+        
 
 @dp.message_handler(AnsweredQuestionPhase())
 async def asked_question(message: types.Message):
@@ -137,16 +150,3 @@ async def asked_question(message: types.Message):
     else:
         await message.answer(
             _("🏛 Для начала 🌩СеансаСвязи в {category} введите команду /call").format(category=category))
-
-
-@dp.message_handler(AnsweredQuestionNoPhase())
-async def asked_question(message: types.Message):
-    chat_id = message.chat.id
-    category = get_category(chat_id)
-    phase = get_phase(category)
-
-    if phase.running:
-        return
-    question = message.reply_to_message.text[2:]
-    text = "".join([question, "\n\n", message.text, "\n#A"])
-    await send_to_all(bot, text, category=category)

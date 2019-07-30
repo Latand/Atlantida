@@ -28,6 +28,7 @@ class Phase:
     def set_running(self):
         self.running = True
         self.countdown: datetime = datetime.datetime.now()
+        self.current: str = "Questions"
 
     def disable(self):
         self.running = False

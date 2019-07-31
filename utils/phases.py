@@ -24,11 +24,13 @@ class Phase:
     running: bool = False
     QUESTIONS = "Questions"
     ANSWERS = "Answers"
+    bot: Bot = None
 
     def set_running(self):
         self.running = True
         self.countdown: datetime = datetime.datetime.now()
         self.current: str = "Questions"
+        self.bot = Bot.get_current()
 
     def disable(self):
         self.running = False
@@ -48,13 +50,16 @@ class Phase:
     def chats(self):
         return get_chats(self.category)
 
+    # async def send_poll_questions(self):
+    #     chats = self.chats
+
+
     @property
     def time_left(self):
         now = datetime.datetime.now()
         return ((self.countdown + datetime.timedelta(seconds=self.timeout)) - now).total_seconds()
 
     async def start_phaser(self):
-        bot = Bot.get_current()
         logging.info("Phaser started")
         messages_to_delete = list()
 
@@ -63,7 +68,7 @@ class Phase:
             logging.info(f"ENTERING PHASE QUESTIONS")
             clear_table("sent_messages", self.category)
             global messages_to_delete
-            return await send_to_all(bot, "🏛☀️Атлантида находится в режиме ⚡Связи.\n"
+            return await send_to_all(self.bot, "🏛☀️Атлантида находится в режиме ⚡Связи.\n"
                                           "Пример создания 🗿Атланта:\n"
                                           "1-й 🌩СеансСвязи #В ...ВашВопрос? или #О ...ВашОтвет!\n"
                                           "2-й 🌩СеансСвязи Ваши ответы на выбранную 🌀Мысль",
@@ -72,10 +77,11 @@ class Phase:
         async def answers():
             clear_table("winner_questions", self.category)
             chats = load_questions(self.category)
+            logging.info(f"Loaded Questions {chats}")
             best_option = 0, 0, 0
             for chat_id, poll_id, question, message_id in chats:
                 try:
-                    poll = await bot.stop_poll(chat_id=chat_id, message_id=poll_id)
+                    poll = await self.bot.stop_poll(chat_id=chat_id, message_id=poll_id)
                     voters_count = poll.options[0].voter_count
                     if voters_count > best_option[0]:
                         best_option = voters_count, chat_id, message_id
@@ -86,13 +92,15 @@ class Phase:
             logging.info(f"category {self.category} winner: {best_option}")
             delete_questions(self.category)
             load_questions_to_send = questions_to_send(self.category)
+            logging.info(f"Loaded Questions to send {load_questions_to_send}")
+
             if not load_questions_to_send:
                 self.running = False
                 return
             for id_question, chat_id, question in load_questions_to_send:
                 try:
                     text = f"☁️ {question}"
-                    sent_message = await bot.send_message(chat_id, text)
+                    sent_message = await self.bot.send_message(chat_id, text)
                     save_sent(id_question, chat_id, sent_message.message_id)
 
                 except Exception as err:
@@ -104,9 +112,10 @@ class Phase:
 
             # Load answers
             loaded_answers = load_answers(self.category)
+            logging.info(f"Loaded answers {loaded_answers}")
             for chat_id, poll_id, answer, message_id in loaded_answers:
                 try:
-                    poll = await bot.stop_poll(chat_id=chat_id, message_id=poll_id)
+                    poll = await self.bot.stop_poll(chat_id=chat_id, message_id=poll_id)
                     logging.info(f"{poll.options}")
 
                     voters_count = poll.options[0].voter_count
@@ -116,10 +125,13 @@ class Phase:
             delete_answers(self.category)
 
             text = get_winner_answers(self.category)
+            logging.info(f"Loaded winner answers {loaded_answers}")
+
             if text:
+                logging.info(f"Chats = {self.chats}")
                 for (chat,) in self.chats:
                     try:
-                        await bot.send_message(chat, text)
+                        await self.bot.send_message(chat, text)
 
                     except Exception as err:
                         logging.exception(err)
@@ -129,7 +141,7 @@ class Phase:
             if sent_messages:
                 for chat_id, _, message_id in sent_messages:
                     try:
-                        await bot.delete_message(chat_id, message_id)
+                        await self.bot.delete_message(chat_id, message_id)
 
                     except Exception as err:
                         logging.exception(err)

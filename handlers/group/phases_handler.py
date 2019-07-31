@@ -72,11 +72,16 @@ async def asked_question(message: types.Message):
 
     if phase.running:
         return
-    question = message.reply_to_message.text[2:]
-    text = "".join([question, "\n\n", message.text, "\n#A"])
+    prefix_q, question = message.reply_to_message.text[:2], message.reply_to_message.text[3:]
+    if message.text.startswith("#"):
+        prefix_a, answer = message.text[1:3], message.text[3:]
+    else:
+        prefix_a = "О"
+        answer = message.text
+    text = "".join([question, "\n\n", answer, "\n#A ", prefix_q.upper() + prefix_a.upper()])
     await send_to_all(bot, text, category=category)
-        
-     
+
+
 @dp.message_handler(AskedQuestion())
 async def asked_question(message: types.Message):
     chat_id = message.chat.id
@@ -116,7 +121,7 @@ async def asked_question(message: types.Message):
 
         # await message.answer(
         #     _("🏛 Для начала 🌩СеансаСвязи в {category} введите команду /call").format(category=category))
-        
+
 
 @dp.message_handler(AnsweredQuestionPhase())
 async def asked_question(message: types.Message):

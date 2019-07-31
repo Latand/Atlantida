@@ -83,7 +83,7 @@ def get_chats(category=None):
                           condition=dict(category=category),
                           multiple=True)
     else:
-        return sql.select(where="chats")
+        return sql.select(where="chats", multiple=True)
 
 
 def get_winner_question(category: str):
@@ -125,7 +125,8 @@ def delete_answers(category):
 def questions_to_send(category):
     return sql.select(where="winner_questions w, chats c",
                       what="w.id, c.chat_id, w.question",
-                      condition={"w.category": category})
+                      condition={"w.category": category,
+                                 "c.chat_id": "w.chat_id"})
 
 
 def save_sent(id_question, chat_id, message_id):

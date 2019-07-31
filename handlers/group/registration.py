@@ -52,4 +52,4 @@ async def register_chat(message: types.Message):
 @dp.message_handler(IsGroup())
 async def other(message: types.Message, state: FSMContext):
     state = await state.get_state()
-    logging.info(f"what? %s %s", message.text, state)
+    # logging.info(f"what? %s %s", message.text, state)

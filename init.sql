@@ -25,8 +25,8 @@ create table IF NOT EXISTS questions
     chat_id  BIGINT                                 not null,
     question TEXT NOT NULL,
     message_id BIGINT NOT NULL,
-    poll_id BIGINT NOT NULL,
     date     timestamp    default CURRENT_TIMESTAMP not null,
+    category TEXT NOT NULL,
 
     primary key (id, chat_id, message_id)
 ) COLLATE utf8mb4_general_ci;
@@ -37,7 +37,7 @@ create table IF NOT EXISTS winner_questions
     id       int auto_increment                     not null,
     chat_id  BIGINT                                 not null,
     category VARCHAR(1000),
-    question TEXT NOT NULL,
+    question TEXT DEFAULT NULL,
     message_id BIGINT NOT NULL,
     poll_id BIGINT NOT NULL,
     date     timestamp    default CURRENT_TIMESTAMP not null,
@@ -57,7 +57,7 @@ create table IF NOT EXISTS answers
 (
     id       int auto_increment                     not null,
     chat_id  BIGINT                                 not null,
-    answer TEXT NOT NULL,
+    answer TEXT DEFAULT NULL,
     message_id BIGINT NOT NULL,
     poll_id BIGINT NOT NULL,
     date     timestamp    default CURRENT_TIMESTAMP not null,

@@ -164,7 +164,7 @@ class Mysql(object):
 
     def execute(self, command, args=(), select=False, returning=False, kwargs={}, one_element=True, multiple=False,
                 cursor_dict=False):
-        logging.info(f"Command: {command}\n\nArgs={args}")
+        logging.info(f"Command: {command}\nArgs={args}")
         self.connection = self.connect()
         c = None
         if self.if_cursor_dict or cursor_dict:

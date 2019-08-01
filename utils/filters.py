@@ -20,7 +20,7 @@ class AskedQuestion(BoundFilter):
     async def check(self, message: types.Message):
         logging.info(message.text)
         text = message.text.lower()
-        if text.startswith("#в ") or text.startswith("#о "):
+        if text.startswith("?") or text.startswith("!"):
             if ChatType.is_channel(message.chat) or ChatType.is_group_or_super_group(message.chat):
                 return bool(sql.select(where="chats", condition=dict(chat_id=message.chat.id)))
 

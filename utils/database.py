@@ -37,19 +37,23 @@ def add_category(chat_id, category, language):
         sql.update(table="chats", category=category, language=language, condition=dict(chat_id=chat_id))
 
 
-def add_question(chat_id, question, message_id, poll_id):
-    sql.insert(table="questions", chat_id=chat_id, question=question, message_id=message_id, poll_id=poll_id)
+def add_question(chat_id, question, message_id, category):
+    if sql.select(where="questions", what="COUNT(*)", condition=dict(chat_id=chat_id)) < 10:
+        sql.insert(table="questions", chat_id=chat_id, question=question, message_id=message_id,
+                   category=category)
+        return True
+    else:
+        return False
 
 
 def add_answer(chat_id, answer, message_id, poll_id):
     sql.insert(table="answers", chat_id=chat_id, answer=answer, message_id=message_id, poll_id=poll_id)
 
 
-def load_questions(category):
-    return sql.select(where="questions q, chats c",
-                      what="q.chat_id, q.poll_id, q.question, q.message_id",
-                      condition={"q.chat_id": "=c.chat_id",
-                                 "c.category": category})
+def load_questions(chat_id):
+    return sql.select(where="questions q",
+                      what="q.question",
+                      condition={"q.chat_id": chat_id}, multiple=True)
 
 
 def load_answers(category):
@@ -59,16 +63,30 @@ def load_answers(category):
                                  "c.category": category})
 
 
-def add_winner_question(chat_id, category, question, message_id, poll_id):
-    if sql.select(where="winner_questions", condition={"category": category}):
+def add_winner_question(chat_id, category, question=None, message_id=None, poll_id=None):
+    if sql.select(where="winner_questions", condition={"category": category,
+                                                       "chat_id": chat_id}):
         sql.update(table="winner_questions",
-                   chat_id=chat_id, message_id=message_id,
-                   question=question, poll_id=poll_id,
-                   condition=dict(category=category))
+                   chat_id=chat_id,
+                   question=question,
+                   condition=dict(category=category,
+                                  chat_id=chat_id))
     else:
         sql.insert(table="winner_questions", chat_id=chat_id, message_id=message_id,
-                   question=question, poll_id=poll_id,
+                   poll_id=poll_id,
                    category=category)
+
+
+def get_winner_question_poll(chat_id):
+    return sql.select(where="winner_questions", what="poll_id", condition=dict(chat_id=chat_id))
+
+
+def load_winner_questions_in_category(category):
+    return sql.select(where="winner_questions", what="question", condition=dict(category=category), multiple=True)
+
+
+def get_winner_question_category(category):
+    return sql.select(where="winner_questions", what="question", condition=dict(category=category))
 
 
 def add_winner_answer(chat_id, category, answer, message_id, poll_id, vote_count):
@@ -84,10 +102,6 @@ def get_chats(category=None):
                           multiple=True)
     else:
         return sql.select(where="chats", multiple=True)
-
-
-def get_winner_question(category: str):
-    return sql.select(where="winner_questions", what="question", condition=dict(category=category))
 
 
 def get_winner_question_id(chat_id):
@@ -152,3 +166,12 @@ def set_new_lang(chat_id, language):
 def save_no_phase(messages: List[Message]):
     for message in messages:
         sql.insert(table="no_phase_message", chat_id=message.chat.id, message_id=message.message_id)
+
+
+def save_poll_question(chat_id, category, poll_id, page):
+    sql.insert(table="category_poll_questions",
+               chat_id=chat_id, category=category, poll_id=poll_id, page=page)
+
+
+def get_all_polls_questions(category):
+    return sql.select(where="category_poll_questions", condition=dict(category=category), multiple=True)

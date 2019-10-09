@@ -63,18 +63,9 @@ def load_answers(category):
                                  "c.category": category})
 
 
-def add_winner_question(chat_id, category, question=None, message_id=None, poll_id=None):
-    if sql.select(where="winner_questions", condition={"category": category,
-                                                       "chat_id": chat_id}):
-        sql.update(table="winner_questions",
-                   chat_id=chat_id,
-                   question=question,
-                   condition=dict(category=category,
-                                  chat_id=chat_id))
-    else:
-        sql.insert(table="winner_questions", chat_id=chat_id, message_id=message_id,
-                   poll_id=poll_id,
-                   category=category)
+def add_winner_question(chat_id, category, question=None, message_id=None):
+    sql.exec_raw("INSERT INTO winner_questions (chat_id, category, question, message_id) "
+                 "VALUES (%s, %s, %s, %s)", chat_id, category, question, message_id)
 
 
 def get_winner_question_poll(chat_id):
@@ -175,3 +166,54 @@ def save_poll_question(chat_id, category, poll_id, page):
 
 def get_all_polls_questions(category):
     return sql.select(where="category_poll_questions", condition=dict(category=category), multiple=True)
+
+
+def vote_for_question_db(user, chat, category, text, message_id):
+    if sql.exec_raw("SELECT COUNT(*) "
+                    "FROM questions_voting "
+                    "WHERE user=%s AND id_chat=%s AND category=%s", user, chat, category,
+                    select=True):
+        sql.exec_raw("UPDATE questions_voting "
+                     "SET message_id=%s, text=%s "
+                     "WHERE user=%s AND category=%s AND id_chat=%s", message_id, text, user, category, chat)
+        return "Changed"
+    else:
+        sql.exec_raw("INSERT INTO questions_voting (text, id_chat, category, user, message_id) "
+                     "VALUES (%s, %s, %s, %s, %s)", text, chat, category, user, message_id)
+        return "Voted"
+
+
+def vote_for_answer_db(user, chat, category, text, message_id, q_message_id):
+    if sql.exec_raw("SELECT COUNT(*) "
+                    "FROM answers_voting "
+                    "WHERE user=%s AND id_chat=%s AND category=%s AND q_message_id=%s",
+                    user, chat, category, q_message_id,
+                    select=True):
+        sql.exec_raw("UPDATE answers_voting "
+                     "SET message_id=%s, text=%s, q_message_id=%s "
+                     "WHERE user=%s AND category=%s AND id_chat=%s",
+                     message_id, text, q_message_id, user, category, chat)
+        return "Changed"
+    else:
+        sql.exec_raw("INSERT INTO answers_voting (text, id_chat, category, user, message_id, q_message_id) "
+                     "VALUES (%s, %s, %s, %s, %s, %s)", text, chat, category, user, message_id, q_message_id)
+        return "Voted"
+
+
+def collect_best_questions(category):
+    rows = sql.exec_raw("SELECT id_chat, message_id, text, COUNT(*) "
+                        "FROM questions_voting "
+                        "WHERE category='кат' "
+                        "GROUP BY id_chat, message_id, text", category, select=True)
+    return rows
+
+
+def collect_best_answers(category):
+    rows = sql.exec_raw("SELECT DISTINCT(answers_voting.text) answer, winner_questions.question, COUNT(*) c "
+                        "FROM answers_voting, winner_questions "
+                        "WHERE answers_voting.category = 'cat' "
+                        "  AND winner_questions.message_id=answers_voting.q_message_id "
+                        "GROUP BY answers_voting.text, winner_questions.question "
+                        "ORDER BY c DESC "
+                        "LIMIT 1", category, select=True)
+    return rows

@@ -242,14 +242,14 @@ class Mysql(object):
                 if returning:
                     return ids
 
-    def exec_raw(self, command, select=False, multiple=False, cursor_dict=False):
+    def exec_raw(self, command, *args, select=False, multiple=False, cursor_dict=False):
         self.connection = self.connect()
         try:
             if cursor_dict:
                 cursor = self.connection.cursor(pymysql.cursors.DictCursor)
             else:
                 cursor = self.connection.cursor()
-            cursor.execute(command)
+            cursor.execute(command, args=args)
             self.connection.commit()
             if select:
                 values = cursor.fetchall()

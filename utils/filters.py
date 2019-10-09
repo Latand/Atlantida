@@ -20,7 +20,21 @@ class AskedQuestion(BoundFilter):
     async def check(self, message: types.Message):
         logging.info(message.text)
         text = message.text.lower()
-        if text.startswith("?") or text.startswith("!"):
+        allowed = ["? ", ". "]
+
+        if any(map(text.startswith, allowed)):
+            if ChatType.is_channel(message.chat) or ChatType.is_group_or_super_group(message.chat):
+                return bool(sql.select(where="chats", condition=dict(chat_id=message.chat.id)))
+
+
+@dataclass
+class AskedQuestionAnswer(BoundFilter):
+
+    async def check(self, message: types.Message):
+        logging.info(message.text)
+        text = message.text.lower()
+        allowed = ["?! ", "?? ", "!? ", "!! "]
+        if any(map(text.startswith, allowed)):
             if ChatType.is_channel(message.chat) or ChatType.is_group_or_super_group(message.chat):
                 return bool(sql.select(where="chats", condition=dict(chat_id=message.chat.id)))
 
@@ -34,7 +48,7 @@ class AnsweredQuestionPhase(BoundFilter):
             if rp:
                 rp = rp.message_id
                 chat_id = message.chat.id
-                return bool(sql.select(where="sent_messages", condition=dict(chat_id=chat_id, message_id=rp)))
+                return bool(sql.select(where="winner_questions", condition=dict(chat_id=chat_id, message_id=rp)))
 
 
 @dataclass
